@@ -1,4 +1,4 @@
-import db from "../ingestion/db.js";
+import db from "./db.js";
 
 export const tekmetricWebhook = async (req, res) => {
   try {
