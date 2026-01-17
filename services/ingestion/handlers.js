@@ -1,36 +1,53 @@
 import db from "../ingestion/db.js";
+
 export const tekmetricWebhook = async (req, res) => {
   try {
-    // 1. Log for debugging
-    console.log("Tekmetric Webhook received:", JSON.stringify(req.body));
-
-    // 2. Respond immediately (200 OK)
+    // 1. Acknowledge receipt immediately
     res.status(200).json({ message: "Webhook received successfully" });
 
-    // 3. Extract Data
-    // Note: Tekmetric usually wraps the order in a 'data' object or sends flat fields.
-    // Adjust these keys based on the REAL payload you see in logs.
-    const { id, repair_order_number, repair_order_status_id, shopId } = req.body;
+    // 2. Extract Data
+    const { data } = req.body;
 
-    console.log("Processing Order:", repair_order_number);
+    if (!data) {
+       console.warn("⚠️ Webhook received but no 'data' object found.");
+       return;
+    }
+
+    // 3. Destructure fields (Mapping CamelCase from payload)
+    const {
+        id: tekmetricRoId,
+        repairOrderNumber,
+        tekmetricShopId, 
+        repairOrderStatus
+    } = data;
 
     // 4. Validate
-    if (!repair_order_number || !shopId) {
-        console.warn("⚠️ Missing data, skipping DB insert.");
+    if (!repairOrderNumber || !tekmetricShopId) {
+        console.warn("⚠️ Missing critical data, skipping.");
         return;
     }
 
-    // 5. Insert into DB
-    // We use a Sub-Query to get the UUID for the shop based on Tekmetric's ID
+    const statusValue = repairOrderStatus?.name || "Unknown";
+
+    // 5. Insert/Upsert into DB
+    // We insert into 'shop_id' (internal FK) via lookup AND 'tekmetric_shop_id' (raw value)
     const queryText = `
         INSERT INTO orders (
             tekmetric_ro_id, 
             ro_number, 
             status, 
-            shop_id, 
+            shop_id,            -- Internal Database ID (Foreign Key)
+            tekmetric_shop_id,  -- Raw Tekmetric ID 
             updated_at
         ) 
-        VALUES ($1, $2, $3, (SELECT id FROM shops WHERE tekmetric_shop_id = $4), NOW())
+        VALUES (
+            $1, 
+            $2, 
+            $3, 
+            (SELECT id FROM shops WHERE tekmetric_shop_id = $4), -- Lookup Internal ID
+            $4, -- Insert Raw ID
+            NOW()
+        )
         ON CONFLICT (shop_id, tekmetric_ro_id) 
         DO UPDATE SET 
             status = EXCLUDED.status,
@@ -38,13 +55,21 @@ export const tekmetricWebhook = async (req, res) => {
         RETURNING id;
     `;
 
-    const values = [id, repair_order_number, repair_order_status_id, shopId];
+    const values = [tekmetricRoId, repairOrderNumber, statusValue, tekmetricShopId];
 
     const result = await db.query(queryText, values);
-    console.log("✅ Data synced, DB ID:", result.rows[0]?.id);
+    
+    // 6. Validation Log
+    // If the subquery (SELECT id FROM shops...) returns NULL because the shop doesn't exist,
+    // the insert might fail (if shop_id is NOT NULL) or insert a NULL. 
+    // This check helps confirm a row was actually touched.
+    if (result.rows.length > 0) {
+        console.log("✅ Data synced, Order DB ID:", result.rows[0].id);
+    } else {
+        console.warn(`⚠️ Insert failed. Check if Tekmetric Shop ID ${shopId} exists in your 'shops' table.`);
+    }
 
   } catch (err) {
-    console.error("❌ Error inserting webhook data:", err);
-    // Don't send a response here, we already sent 200.
+    console.error("❌ Error processing webhook:", err);
   }
 };
