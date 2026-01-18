@@ -2,7 +2,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { tekmetricWebhook } from './handlers.js';
-import {tekmetricAuth} from "../tekmetricAuth.js"
 dotenv.config();
 
 const app = express();
@@ -17,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 // Route
-app.post('/webhooks/tekmetric',tekmetricAuth, tekmetricWebhook);
+app.post('/webhooks/tekmetric', tekmetricWebhook);
 
 app.listen(PORT, () => {
   console.log(`Ingestion Service listening on port 8080`);
