@@ -1,8 +1,0 @@
-steps:
-  # This step tells Google: "Run docker build, but use MY specific file"
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/innu-ingestion', '-f', 'Dockerfile.ingestion', '.' ]
-
-# This pushes the result to the registry so Cloud Run can find it
-images:
-  - 'gcr.io/$PROJECT_ID/innu-ingestion'

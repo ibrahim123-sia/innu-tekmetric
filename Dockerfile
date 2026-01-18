@@ -12,4 +12,4 @@ COPY . .
 
 # 3. Start the Ingestion Service
 # We explicitly point to the ingestion index file
-CMD ["node", "services/ingestion/index.js"]
+CMD ["node", "index.js"]
