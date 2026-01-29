@@ -12,7 +12,7 @@ export const tekmetricWebhook = async (req, res) => {
     const {
       id: tekmetricRoId,
       repairOrderNumber,
-      tekmetricShopId,
+      shopId: tekmetricShopId,
       repairOrderStatus,
     } = data;
 
