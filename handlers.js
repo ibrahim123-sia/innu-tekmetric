@@ -2,35 +2,27 @@ import db from "./db.js";
 
 export const tekmetricWebhook = async (req, res) => {
   try {
-    // 1. Acknowledge receipt immediately
-    res.status(200).json({ message: "Webhook received successfully" });
-
-    // 2. Extract Data
     const { data } = req.body;
 
     if (!data) {
-       console.warn("⚠️ Webhook received but no 'data' object found.");
-       return;
+      console.warn("⚠️ Webhook received but no 'data' object found.");
+      return;
     }
 
-    // 3. Destructure fields (Mapping CamelCase from payload)
     const {
-        id: tekmetricRoId,
-        repairOrderNumber,
-        tekmetricShopId, 
-        repairOrderStatus
+      id: tekmetricRoId,
+      repairOrderNumber,
+      tekmetricShopId,
+      repairOrderStatus,
     } = data;
 
-    // 4. Validate
     if (!repairOrderNumber || !tekmetricShopId) {
-        console.warn("⚠️ Missing critical data, skipping.");
-        return;
+      console.warn("⚠️ Missing critical data, skipping.");
+      return;
     }
 
     const statusValue = repairOrderStatus?.name || "Unknown";
 
-    // 5. Insert/Upsert into DB
-    // We insert into 'shop_id' (internal FK) via lookup AND 'tekmetric_shop_id' (raw value)
     const queryText = `
         INSERT INTO orders (
             tekmetric_ro_id, 
@@ -55,21 +47,28 @@ export const tekmetricWebhook = async (req, res) => {
         RETURNING id;
     `;
 
-    const values = [tekmetricRoId, repairOrderNumber, statusValue, tekmetricShopId];
+    const values = [
+      tekmetricRoId,
+      repairOrderNumber,
+      statusValue,
+      tekmetricShopId,
+    ];
 
     const result = await db.query(queryText, values);
-    
-    // 6. Validation Log
-    // If the subquery (SELECT id FROM shops...) returns NULL because the shop doesn't exist,
-    // the insert might fail (if shop_id is NOT NULL) or insert a NULL. 
-    // This check helps confirm a row was actually touched.
+
     if (result.rows.length > 0) {
-        console.log("✅ Data synced, Order DB ID:", result.rows[0].id);
+      console.log("✅ Data synced, Order DB ID:", result.rows[0].id);
     } else {
-        console.warn(`⚠️ Insert failed. Check if Tekmetric Shop ID ${shopId} exists in your 'shops' table.`);
+      console.warn(
+        `⚠️ Insert failed. Check if Tekmetric Shop ID ${shopId} exists in your 'shops' table.`,
+      );
     }
 
+    res.status(200).json({ message: "Webhook received successfully" });
   } catch (err) {
     console.error("❌ Error processing webhook:", err);
+    res.status(200).json({
+      message: "Webhook received successfully but could not be stored",
+    });
   }
 };
