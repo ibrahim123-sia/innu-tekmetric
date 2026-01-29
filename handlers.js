@@ -29,7 +29,6 @@ export const tekmetricWebhook = async (req, res) => {
             ro_number, 
             status, 
             shop_id,            -- Internal Database ID (Foreign Key)
-            tekmetric_shop_id,  -- Raw Tekmetric ID 
             updated_at
         ) 
         VALUES (
@@ -37,7 +36,6 @@ export const tekmetricWebhook = async (req, res) => {
             $2, 
             $3, 
             (SELECT id FROM shops WHERE tekmetric_shop_id = $4), -- Lookup Internal ID
-            $4, -- Insert Raw ID
             NOW()
         )
         ON CONFLICT (shop_id, tekmetric_ro_id) 
