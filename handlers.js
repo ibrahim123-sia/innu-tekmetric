@@ -12,7 +12,7 @@ export const tekmetricWebhook = async (req, res) => {
     const {
       id: tekmetricRoId,
       repairOrderNumber,
-      tekmetricShopId,
+      shopId: tekmetricShopId,
       repairOrderStatus,
       customerId,
       customerConcerns,
@@ -63,9 +63,6 @@ export const tekmetricWebhook = async (req, res) => {
             status, 
             shop_id,            -- Internal Database ID (Foreign Key)
             tekmetric_shop_id,  -- Raw Tekmetric ID 
-            customer_name,
-            customer_concerns,
-            vehicle_info,
             updated_at
         ) 
         VALUES (
