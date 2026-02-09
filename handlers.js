@@ -14,7 +14,40 @@ export const tekmetricWebhook = async (req, res) => {
       repairOrderNumber,
       tekmetricShopId,
       repairOrderStatus,
+      customerId,
+      customerConcerns,
+      vehicleId,
     } = data;
+
+    const customer_concerns = Array.isArray(customerConcerns)
+      ? customerConcerns.map((c) => c.concern)
+      : [];
+
+    const customer_name = await axios.get(
+      `https://shop.tekmetric.com/api/v1/customers/${customerId}?shop=${tekmetricShopId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
+        },
+      },
+    );
+    const vehicleResponse = await axios.get(
+      `https://shop.tekmetric.com/api/v1/vehicles/${vehicleId}?shop=${tekmetricShopId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
+        },
+      },
+    );
+
+    const vehicle_info = {
+      make: vehicleResponse.data.make,
+      model: vehicleResponse.data.model,
+      license_plate: vehicleResponse.data.license_plate,
+      year: vehicleResponse.data.year,
+      body_type: vehicleResponse.data.body_type,
+      sub_model: vehicleResponse.data.sub_model,
+    };
 
     if (!repairOrderNumber || !tekmetricShopId) {
       console.warn("⚠️ Missing critical data, skipping.");
@@ -30,6 +63,9 @@ export const tekmetricWebhook = async (req, res) => {
             status, 
             shop_id,            -- Internal Database ID (Foreign Key)
             tekmetric_shop_id,  -- Raw Tekmetric ID 
+            customer_name,
+            customer_concerns,
+            vehicle_info,
             updated_at
         ) 
         VALUES (
@@ -38,6 +74,9 @@ export const tekmetricWebhook = async (req, res) => {
             $3, 
             (SELECT id FROM shops WHERE tekmetric_shop_id = $4), -- Lookup Internal ID
             $4, -- Insert Raw ID
+            $5,
+            $6,
+            $7,
             NOW()
         )
         ON CONFLICT (shop_id, tekmetric_ro_id) 
@@ -52,6 +91,9 @@ export const tekmetricWebhook = async (req, res) => {
       repairOrderNumber,
       statusValue,
       tekmetricShopId,
+      customer_name,
+      customer_concerns,
+      vehicle_info,
     ];
 
     const result = await db.query(queryText, values);
