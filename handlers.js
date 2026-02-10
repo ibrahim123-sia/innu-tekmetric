@@ -1,12 +1,13 @@
 import db from "./db.js";
-import axios from 'axios'
+import axios from "axios";
+
 export const tekmetricWebhook = async (req, res) => {
   try {
     const { data } = req.body;
 
     if (!data) {
-      console.warn("⚠️ Webhook received but no 'data' object found.");
-      return;
+      console.warn("⚠️ Webhook received but no data object.");
+      return res.status(200).json({ message: "No data payload" });
     }
 
     const {
@@ -19,68 +20,92 @@ export const tekmetricWebhook = async (req, res) => {
       vehicleId,
     } = data;
 
+    if (!tekmetricRoId || !repairOrderNumber || !tekmetricShopId) {
+      console.warn("⚠️ Missing required fields.");
+      return res.status(200).json({ message: "Missing required fields" });
+    }
+
     const customer_concerns = Array.isArray(customerConcerns)
       ? customerConcerns.map((c) => c.concern)
       : [];
 
-    const customer_name = await axios.get(
-      `https://shop.tekmetric.com/api/v1/customers/${customerId}?shop=${tekmetricShopId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
-        },
-      },
-    );
-    const vehicleResponse = await axios.get(
-      `https://shop.tekmetric.com/api/v1/vehicles/${vehicleId}?shop=${tekmetricShopId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
-        },
-      },
-    );
+    let customer_name = null;
 
-    const vehicle_info = {
-      make: vehicleResponse.data.make,
-      model: vehicleResponse.data.model,
-      license_plate: vehicleResponse.data.license_plate,
-      year: vehicleResponse.data.year,
-      body_type: vehicleResponse.data.body_type,
-      sub_model: vehicleResponse.data.sub_model,
-    };
+    if (customerId) {
+      const customerResponse = await axios.get(
+        `https://shop.tekmetric.com/api/v1/customers/${customerId}?shop=${tekmetricShopId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
+          },
+        },
+      );
 
-    if (!repairOrderNumber || !tekmetricShopId) {
-      console.warn("⚠️ Missing critical data, skipping.");
-      return;
+      customer_name =
+        customerResponse?.data?.data?.fullName ||
+        customerResponse?.data?.data?.name ||
+        null;
+    }
+
+    let vehicle_info = null;
+
+    if (vehicleId) {
+      const vehicleResponse = await axios.get(
+        `https://shop.tekmetric.com/api/v1/vehicles/${vehicleId}?shop=${tekmetricShopId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.TEKMETRIC_API_KEY}`,
+          },
+        },
+      );
+
+      const v = vehicleResponse?.data?.data;
+
+      if (v) {
+        vehicle_info = {
+          make: v.make || null,
+          model: v.model || null,
+          year: v.year || null,
+          license_plate: v.licensePlate || null,
+          body_type: v.bodyType || null,
+          sub_model: v.subModel || null,
+        };
+      }
     }
 
     const statusValue = repairOrderStatus?.name || "Unknown";
 
     const queryText = `
-        INSERT INTO orders (
-            tekmetric_ro_id, 
-            ro_number, 
-            status, 
-            shop_id,            -- Internal Database ID (Foreign Key)
-            tekmetric_shop_id,  -- Raw Tekmetric ID 
-            updated_at
-        ) 
-        VALUES (
-            $1, 
-            $2, 
-            $3, 
-            (SELECT id FROM shops WHERE tekmetric_shop_id = $4), -- Lookup Internal ID
-            $4, -- Insert Raw ID
-            $5,
-            $6,
-            $7,
-            NOW()
-        )
-        ON CONFLICT (shop_id, tekmetric_ro_id) 
-        DO UPDATE SET 
-            status = EXCLUDED.status,
-            updated_at = NOW()
-        RETURNING id;
+      INSERT INTO orders (
+        tekmetric_ro_id,
+        ro_number,
+        status,
+        shop_id,
+        tekmetric_shop_id,
+        customer_name,
+        customer_concerns,
+        vehicle_info,
+        updated_at
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        (SELECT id FROM shops WHERE tekmetric_shop_id = $4),
+        $4,
+        $5,
+        $6,
+        $7,
+        NOW()
+      )
+      ON CONFLICT (shop_id, tekmetric_ro_id)
+      DO UPDATE SET
+        status = EXCLUDED.status,
+        customer_name = EXCLUDED.customer_name,
+        customer_concerns = EXCLUDED.customer_concerns,
+        vehicle_info = EXCLUDED.vehicle_info,
+        updated_at = NOW()
+      RETURNING id;
     `;
 
     const values = [
@@ -96,18 +121,19 @@ export const tekmetricWebhook = async (req, res) => {
     const result = await db.query(queryText, values);
 
     if (result.rows.length > 0) {
-      console.log("✅ Data synced, Order DB ID:", result.rows[0].id);
+      console.log("✅ Order synced. DB ID:", result.rows[0].id);
     } else {
       console.warn(
-        `⚠️ Insert failed. Check if Tekmetric Shop ID ${shopId} exists in your 'shops' table.`,
+        `⚠️ Shop not found for Tekmetric Shop ID: ${tekmetricShopId}`,
       );
     }
 
-    res.status(200).json({ message: "Webhook received successfully" });
-  } catch (err) {
-    console.error("❌ Error processing webhook:", err);
-    res.status(200).json({
-      message: "Webhook received successfully but could not be stored",
+    return res.status(200).json({ message: "Webhook processed successfully" });
+  } catch (error) {
+    console.error("❌ Tekmetric Webhook Error:", error.message);
+
+    return res.status(200).json({
+      message: "Webhook received but processing failed",
     });
   }
 };
