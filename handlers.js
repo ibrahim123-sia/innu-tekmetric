@@ -42,7 +42,7 @@ export const tekmetricWebhook = async (req, res) => {
         },
       );
 
-    
+    console.log("customer name",customerResponse)
       customer_name =
         customerResponse?.data?.data?.firstName ||
         customerResponse?.data?.data?.lastName ||
@@ -60,6 +60,7 @@ export const tekmetricWebhook = async (req, res) => {
           },
         },
       );
+      console.log("vehicle response",vehicleResponse )
 
       const v = vehicleResponse?.data?.data;
             console.log("vehicle info ",v)
@@ -84,7 +85,7 @@ export const tekmetricWebhook = async (req, res) => {
         status,
         shop_id,
         customer_name,
-        customer_concerns,
+        customer_concern,
         vehicle_info,
         updated_at
       )
