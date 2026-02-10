@@ -44,8 +44,8 @@ export const tekmetricWebhook = async (req, res) => {
 
     
       customer_name =
-        customerResponse?.data?.data?.fullName ||
-        customerResponse?.data?.data?.name ||
+        customerResponse?.data?.data?.firstName ||
+        customerResponse?.data?.data?.lastName ||
         null;
     }
     console.log("customer name",customer_name)
@@ -62,15 +62,15 @@ export const tekmetricWebhook = async (req, res) => {
       );
 
       const v = vehicleResponse?.data?.data;
-console.log("vehicle info ",v)
+            console.log("vehicle info ",v)
       if (v) {
         vehicle_info = {
-          make: v.make || null,
-          model: v.model || null,
-          year: v.year || null,
-          license_plate: v.licensePlate || null,
-          body_type: v.bodyType || null,
-          sub_model: v.subModel || null,
+          make: v.Make || null,
+          model: v.Model || null,
+          year: v.Year || null,
+          license_plate: v.License_Plate || null,
+          body_type: v.Body_Type || null,
+          sub_model: v.Sub_Model || null,
         };
       }
     }
@@ -83,7 +83,6 @@ console.log("vehicle info ",v)
         ro_number,
         status,
         shop_id,
-        tekmetric_shop_id,
         customer_name,
         customer_concerns,
         vehicle_info,
