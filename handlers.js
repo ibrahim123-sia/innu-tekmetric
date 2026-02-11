@@ -94,9 +94,9 @@ export const tekmetricWebhook = async (req, res) => {
         $2,
         $3,
         (SELECT id FROM shops WHERE tekmetric_shop_id = $4),
-        $4,
         $5,
         $6,
+        $7,
         NOW()
       )
       ON CONFLICT (shop_id, tekmetric_ro_id)
