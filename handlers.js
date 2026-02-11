@@ -62,7 +62,7 @@ export const tekmetricWebhook = async (req, res) => {
       );
       console.log("vehicle response",vehicleResponse )
 
-      const v = vehicleResponse?.data;
+      const v = vehicleResponse;
             console.log("vehicle info ",v)
       if (v) {
         vehicle_info = {
