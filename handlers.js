@@ -103,7 +103,7 @@ export const tekmetricWebhook = async (req, res) => {
       DO UPDATE SET
         status = EXCLUDED.status,
         customer_name = EXCLUDED.customer_name,
-        customer_concerns = EXCLUDED.customer_concerns,
+        customer_concern = EXCLUDED.customer_concern,
         vehicle_info = EXCLUDED.vehicle_info,
         updated_at = NOW()
       RETURNING id;
