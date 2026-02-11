@@ -29,7 +29,6 @@ export const tekmetricWebhook = async (req, res) => {
       ? customerConcerns.map((c) => c.concern)
       : [];
 
-   
     let customer_name = null;
 
     if (customerId) {
@@ -42,10 +41,12 @@ export const tekmetricWebhook = async (req, res) => {
         },
       );
 
-    customer_name = customerResponse?.data?.firstName + ' ' + customerResponse?.data?.lastName;
-
+      customer_name =
+        customerResponse?.data?.firstName +
+        " " +
+        customerResponse?.data?.lastName;
     }
-    console.log("customer name",customer_name)
+    console.log("customer name", customer_name);
     let vehicle_info = null;
 
     if (vehicleId) {
@@ -58,20 +59,18 @@ export const tekmetricWebhook = async (req, res) => {
         },
       );
 
-      const v = vehicleResponse?.data;
-       
-      if (v) {
+      if (vehicleResponse) {
         vehicle_info = {
-          make: v.Make || null,
-          model: v.Model || null,
-          year: v.Year || null,
-          license_plate: v.License_Plate || null,
-          body_type: v.Body_Type || null,
-          sub_model: v.Sub_Model || null,
+          make: vehicleResponse?.data?.make || null,
+          model: vehicleResponse?.data?.model || null,
+          year: vehicleResponse?.data?.year || null,
+          license_plate: vehicleResponse?.data?.license_plate || null,
+          body_type: vehicleResponse?.data?.body_type || null,
+          sub_model: vehicleResponse?.data?.sub_model || null,
         };
       }
     }
-console.log("")
+    console.log("");
     const statusValue = repairOrderStatus?.name || "Unknown";
 
     const queryText = `
