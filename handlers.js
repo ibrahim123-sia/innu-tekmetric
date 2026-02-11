@@ -44,8 +44,8 @@ export const tekmetricWebhook = async (req, res) => {
 
     console.log("customer name",customerResponse)
       customer_name =
-        customerResponse?.data?.data?.firstName ||
-        customerResponse?.data?.data?.lastName ||
+        customerResponse?.firstName ||
+        customerResponse?.lastName ||
         null;
     }
     console.log("customer name",customer_name)
@@ -62,7 +62,7 @@ export const tekmetricWebhook = async (req, res) => {
       );
       console.log("vehicle response",vehicleResponse )
 
-      const v = vehicleResponse?.data?.data;
+      const v = vehicleResponse?.data;
             console.log("vehicle info ",v)
       if (v) {
         vehicle_info = {
@@ -97,7 +97,6 @@ export const tekmetricWebhook = async (req, res) => {
         $4,
         $5,
         $6,
-        $7,
         NOW()
       )
       ON CONFLICT (shop_id, tekmetric_ro_id)
