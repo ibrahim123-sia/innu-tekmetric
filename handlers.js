@@ -29,7 +29,7 @@ export const tekmetricWebhook = async (req, res) => {
       ? customerConcerns.map((c) => c.concern)
       : [];
 
-    console.log(customer_concerns)  
+   
     let customer_name = null;
 
     if (customerId) {
@@ -42,7 +42,7 @@ export const tekmetricWebhook = async (req, res) => {
         },
       );
 
-    console.log("customer name",customerResponse)
+    console.log("✅ customer response received",customerResponse)  
       customer_name =
         customerResponse?.firstName ||
         customerResponse?.lastName ||
@@ -60,10 +60,10 @@ export const tekmetricWebhook = async (req, res) => {
           },
         },
       );
-      console.log("vehicle response",vehicleResponse )
+      console.log("✅  vehicle response received",vehicleResponse )
 
       const v = vehicleResponse;
-            console.log("vehicle info ",v)
+       
       if (v) {
         vehicle_info = {
           make: v.Make || null,
@@ -75,7 +75,7 @@ export const tekmetricWebhook = async (req, res) => {
         };
       }
     }
-
+console.log("")
     const statusValue = repairOrderStatus?.name || "Unknown";
 
     const queryText = `
@@ -116,7 +116,7 @@ export const tekmetricWebhook = async (req, res) => {
       tekmetricShopId,
       customer_name,
       customer_concerns,
-      vehicle_info,
+      JSON.stringify(vehicle_info),
     ];
 
     const result = await db.query(queryText, values);
