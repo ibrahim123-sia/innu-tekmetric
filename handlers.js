@@ -58,7 +58,7 @@ export const tekmetricWebhook = async (req, res) => {
           },
         },
       );
-
+console.log(vehicleResponse)
       if (vehicleResponse) {
         vehicle_info = {
           make: vehicleResponse?.data?.make || null,
