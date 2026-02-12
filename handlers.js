@@ -46,7 +46,7 @@ export const tekmetricWebhook = async (req, res) => {
         " " +
         customerResponse?.data?.lastName;
     }
-    console.log("customer name", customer_name);
+
     let vehicle_info = null;
 
     if (vehicleId) {
@@ -58,7 +58,7 @@ export const tekmetricWebhook = async (req, res) => {
           },
         },
       );
-console.log(vehicleResponse)
+
       if (vehicleResponse) {
         vehicle_info = {
           make: vehicleResponse?.data?.make || null,
@@ -70,7 +70,7 @@ console.log(vehicleResponse)
         };
       }
     }
-    console.log("");
+
     const statusValue = repairOrderStatus?.name || "Unknown";
 
     const queryText = `
