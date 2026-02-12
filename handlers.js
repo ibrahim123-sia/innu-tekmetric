@@ -64,9 +64,9 @@ console.log(vehicleResponse)
           make: vehicleResponse?.data?.make || null,
           model: vehicleResponse?.data?.model || null,
           year: vehicleResponse?.data?.year || null,
-          license_plate: vehicleResponse?.data?.license_plate || null,
-          body_type: vehicleResponse?.data?.body_type || null,
-          sub_model: vehicleResponse?.data?.sub_model || null,
+          license_plate: vehicleResponse?.data?.licensePlate || null,
+          body_type: vehicleResponse?.data?.bodyType || null,
+          sub_model: vehicleResponse?.data?.subModel || null,
         };
       }
     }
